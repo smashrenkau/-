@@ -1,12 +1,12 @@
-//___FILEHEADER___
-
 import SwiftUI
+import SwiftData
 
 @main
-struct ___PACKAGENAME:identifier___App: App {
+struct タイムボクシングApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [TaskItem.self, ScheduleItem.self])
     }
 }
