@@ -7,6 +7,7 @@ struct DayScheduleView: View {
     @State private var showScheduleForm = false
     @State private var showTaskForm = false
     @State private var showTaskList = false
+    @State private var showTimer = false
     @State private var selectedSchedule: ScheduleItem?
     @State private var editingSchedule: ScheduleItem?
     @Query private var allSchedules: [ScheduleItem]
@@ -22,19 +23,13 @@ struct DayScheduleView: View {
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            if daySchedules.isEmpty {
-                ContentUnavailableView(
-                    "スケジュールがありません",
-                    systemImage: "calendar.badge.exclamationmark"
-                )
-            } else {
-                timelineView
-            }
+            timelineView
 
             FloatingAddButton(
                 onAddSchedule: { showScheduleForm = true },
                 onAddTask: { showTaskForm = true },
-                onShowTaskList: { showTaskList = true }
+                onShowTaskList: { showTaskList = true },
+                onShowTimer: { showTimer = true }
             )
             .padding(20)
         }
@@ -52,6 +47,9 @@ struct DayScheduleView: View {
         }
         .fullScreenCover(isPresented: $showTaskList) {
             TaskListView()
+        }
+        .fullScreenCover(isPresented: $showTimer) {
+            TimerView()
         }
         .sheet(item: $selectedSchedule) { schedule in
             ScheduleDetailView(schedule: schedule) { editTarget in
@@ -93,6 +91,15 @@ struct DayScheduleView: View {
                 }
                 .frame(height: 25 * viewModel.hourHeight)
             }
+            .simultaneousGesture(
+                MagnifyGesture()
+                    .onChanged { value in
+                        viewModel.applyPinchScale(value.magnification)
+                    }
+                    .onEnded { _ in
+                        viewModel.resetPinchScale()
+                    }
+            )
         }
     }
 

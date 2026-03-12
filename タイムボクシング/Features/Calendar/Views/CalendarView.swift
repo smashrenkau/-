@@ -6,6 +6,7 @@ struct CalendarView: View {
     @State private var showScheduleForm = false
     @State private var showTaskForm = false
     @State private var showTaskList = false
+    @State private var showTimer = false
     @Query private var allSchedules: [ScheduleItem]
 
     private let weekdays = ["月", "火", "水", "木", "金", "土", "日"]
@@ -33,7 +34,8 @@ struct CalendarView: View {
                 FloatingAddButton(
                     onAddSchedule: { showScheduleForm = true },
                     onAddTask: { showTaskForm = true },
-                    onShowTaskList: { showTaskList = true }
+                    onShowTaskList: { showTaskList = true },
+                    onShowTimer: { showTimer = true }
                 )
                 .padding(20)
             }
@@ -49,6 +51,9 @@ struct CalendarView: View {
             }
             .fullScreenCover(isPresented: $showTaskList) {
                 TaskListView()
+            }
+            .fullScreenCover(isPresented: $showTimer) {
+                TimerView()
             }
         }
     }
