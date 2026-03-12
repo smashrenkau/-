@@ -3,10 +3,26 @@ import SwiftUI
 @Observable
 class DayScheduleViewModel {
     let date: Date
-    let hourHeight: CGFloat = 60
+
+    static let defaultHourHeight: CGFloat = 78
+    static let minHourHeight: CGFloat = 40
+    static let maxHourHeight: CGFloat = 200
+
+    var hourHeight: CGFloat = DayScheduleViewModel.defaultHourHeight
+    var lastScaleValue: CGFloat = 1.0
 
     init(date: Date) {
         self.date = date
+    }
+
+    func applyPinchScale(_ scale: CGFloat) {
+        let newHeight = hourHeight * scale / lastScaleValue
+        hourHeight = min(max(newHeight, Self.minHourHeight), Self.maxHourHeight)
+        lastScaleValue = scale
+    }
+
+    func resetPinchScale() {
+        lastScaleValue = 1.0
     }
 
     var headerText: String {

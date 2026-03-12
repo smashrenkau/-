@@ -5,6 +5,7 @@ struct FloatingAddButton: View {
     var onAddSchedule: () -> Void
     var onAddTask: () -> Void
     var onShowTaskList: () -> Void
+    var onShowTimer: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
@@ -13,17 +14,7 @@ struct FloatingAddButton: View {
                     isExpanded = false
                     onAddSchedule()
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "calendar.badge.plus")
-                        Text("スケジュール追加")
-                    }
-                    .font(.subheadline.bold())
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(.blue)
-                    .foregroundStyle(.white)
-                    .clipShape(Capsule())
-                    .shadow(radius: 2)
+                    fabMenuItem(icon: "calendar.badge.plus", text: "スケジュール追加", color: .blue)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
 
@@ -31,17 +22,7 @@ struct FloatingAddButton: View {
                     isExpanded = false
                     onAddTask()
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "tag.fill")
-                        Text("タスク追加")
-                    }
-                    .font(.subheadline.bold())
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(.green)
-                    .foregroundStyle(.white)
-                    .clipShape(Capsule())
-                    .shadow(radius: 2)
+                    fabMenuItem(icon: "tag.fill", text: "タスク追加", color: .green)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
 
@@ -49,17 +30,15 @@ struct FloatingAddButton: View {
                     isExpanded = false
                     onShowTaskList()
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "list.bullet")
-                        Text("タスク一覧")
-                    }
-                    .font(.subheadline.bold())
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(.orange)
-                    .foregroundStyle(.white)
-                    .clipShape(Capsule())
-                    .shadow(radius: 2)
+                    fabMenuItem(icon: "list.bullet", text: "タスク一覧", color: .orange)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+
+                Button {
+                    isExpanded = false
+                    onShowTimer()
+                } label: {
+                    fabMenuItem(icon: "timer", text: "タイマー", color: .purple)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -78,5 +57,19 @@ struct FloatingAddButton: View {
                     .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
             }
         }
+    }
+
+    private func fabMenuItem(icon: String, text: String, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+            Text(text)
+        }
+        .font(.subheadline.bold())
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(color)
+        .foregroundStyle(.white)
+        .clipShape(Capsule())
+        .shadow(radius: 2)
     }
 }
