@@ -10,9 +10,22 @@
 		0A78AEDE2F61584600DF1930 /* タイムボクシング.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "タイムボクシング.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0A603B9E2F62639A00C32DEA /* Exceptions for "タイムボクシング" folder in "タイムボクシング" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"-----------Info.plist",
+			);
+			target = 0A78AEDD2F61584600DF1930 /* タイムボクシング */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0A78AEE02F61584600DF1930 /* タイムボクシング */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0A603B9E2F62639A00C32DEA /* Exceptions for "タイムボクシング" folder in "タイムボクシング" target */,
+			);
 			path = "タイムボクシング";
 			sourceTree = "<group>";
 		};
@@ -254,6 +267,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "-----------Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -298,6 +312,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "-----------Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

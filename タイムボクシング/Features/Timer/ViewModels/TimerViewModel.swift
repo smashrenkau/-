@@ -35,6 +35,7 @@ class TimerViewModel {
 
     private var timer: Timer?
     private var backgroundDate: Date?
+    private let audioService = AudioService.shared
 
     // MARK: - Computed Properties
 
@@ -124,6 +125,7 @@ class TimerViewModel {
 
         if remainingSeconds < 0 { remainingSeconds = 0 }
         startTimer()
+        updateAudioForPhase()
     }
 
     // MARK: - Manual Mode
@@ -134,6 +136,7 @@ class TimerViewModel {
         remainingSeconds = manualMinutes * 60
         currentSchedule = nil
         noScheduleMessage = nil
+        audioService.stop()
         startTimer()
     }
 
@@ -152,12 +155,22 @@ class TimerViewModel {
 
     func cancel() {
         stopTimer()
+        audioService.stop()
         timerState = .idle
         remainingSeconds = 0
         currentSchedule = nil
         currentCycleIndex = 0
         noScheduleMessage = nil
         timerPhase = .work
+    }
+
+    func toggleMute() {
+        isMuted.toggle()
+        if isMuted {
+            audioService.pause()
+        } else if timerState == .running && timerMode == .scheduleSynced {
+            updateAudioForPhase()
+        }
     }
 
     // MARK: - Background Handling
@@ -171,6 +184,12 @@ class TimerViewModel {
             self.backgroundDate = nil
             return
         }
+
+        if audioService.isPlaying {
+            self.backgroundDate = nil
+            return
+        }
+
         let elapsed = Int(Date().timeIntervalSince(backgroundDate))
         remainingSeconds = max(remainingSeconds - elapsed, 0)
         self.backgroundDate = nil
@@ -196,10 +215,16 @@ class TimerViewModel {
         timerState = .paused
         timer?.invalidate()
         timer = nil
+        if timerMode == .scheduleSynced {
+            audioService.pause()
+        }
     }
 
     private func resumeTimer() {
         startTimer()
+        if timerMode == .scheduleSynced && !isMuted {
+            audioService.resume()
+        }
     }
 
     private func stopTimer() {
@@ -227,6 +252,7 @@ class TimerViewModel {
                     timerPhase = .breakTime
                     remainingSeconds = schedule.breakMinutes * 60
                     sendLocalNotification(title: schedule.displayTaskName, body: "休憩の時間です！")
+                    updateAudioForPhase()
                     return
                 }
             } else if timerPhase == .breakTime && schedule.loopCount > 0 {
@@ -235,6 +261,7 @@ class TimerViewModel {
                     timerPhase = .work
                     remainingSeconds = schedule.workMinutes * 60
                     sendLocalNotification(title: schedule.displayTaskName, body: "作業開始の時間です！")
+                    updateAudioForPhase()
                     return
                 }
             }
@@ -245,9 +272,23 @@ class TimerViewModel {
         }
 
         stopTimer()
+        audioService.stop()
         timerState = .idle
         currentSchedule = nil
         currentCycleIndex = 0
+    }
+
+    private func updateAudioForPhase() {
+        guard timerMode == .scheduleSynced, !isMuted else {
+            audioService.stop()
+            return
+        }
+        switch timerPhase {
+        case .work:
+            audioService.playTaskMusic()
+        case .breakTime:
+            audioService.playBreakMusic()
+        }
     }
 
     private func sendLocalNotification(title: String, body: String) {

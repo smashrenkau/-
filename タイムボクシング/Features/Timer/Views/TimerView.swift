@@ -45,10 +45,10 @@ struct TimerView: View {
                             .foregroundStyle(.primary)
                     }
                 }
-                if viewModel.timerState != .idle {
+                if viewModel.timerState != .idle && viewModel.timerMode == .scheduleSynced {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
-                            viewModel.isMuted.toggle()
+                            viewModel.toggleMute()
                         } label: {
                             Image(systemName: viewModel.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                                 .foregroundStyle(.primary)
