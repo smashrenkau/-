@@ -29,6 +29,7 @@ class ScheduleItem {
     var loopCount: Int
     var workMinutes: Int
     var breakMinutes: Int
+    var rating: Int?
 
     init(
         task: TaskItem? = nil,
@@ -36,7 +37,8 @@ class ScheduleItem {
         endDateTime: Date,
         loopCount: Int = 0,
         workMinutes: Int = 25,
-        breakMinutes: Int = 5
+        breakMinutes: Int = 5,
+        rating: Int? = nil
     ) {
         self.id = UUID()
         self.task = task
@@ -45,6 +47,7 @@ class ScheduleItem {
         self.loopCount = loopCount
         self.workMinutes = workMinutes
         self.breakMinutes = breakMinutes
+        self.rating = rating
     }
 
     var displayTaskName: String {

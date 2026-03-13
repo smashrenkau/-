@@ -83,6 +83,19 @@ final class TimerService {
     }
 
     private func checkSchedules() {
+        if timerState != .idle && timerMode == .scheduleSynced,
+           let scheduleId = currentScheduleId,
+           let modelContainer {
+            let ctx = ModelContext(modelContainer)
+            let desc = FetchDescriptor<ScheduleItem>()
+            if let all = try? ctx.fetch(desc) {
+                let exists = all.contains { $0.id == scheduleId }
+                if !exists {
+                    cancel()
+                }
+            }
+        }
+
         guard timerState == .idle, let modelContainer else { return }
 
         let context = ModelContext(modelContainer)
@@ -539,6 +552,16 @@ final class TimerService {
         }
 
         if timerMode == .scheduleSynced, let startDT = scheduleStartDateTime {
+            if let scheduleId = currentScheduleId, let container = modelContainer {
+                let ctx = ModelContext(container)
+                let descriptor = FetchDescriptor<ScheduleItem>()
+                let exists = (try? ctx.fetch(descriptor))?.contains { $0.id == scheduleId } ?? false
+                if !exists {
+                    clearPersistedState()
+                    return
+                }
+            }
+
             let now = Date()
             if let endDT = scheduleEndDateTime, now >= endDT {
                 clearPersistedState()

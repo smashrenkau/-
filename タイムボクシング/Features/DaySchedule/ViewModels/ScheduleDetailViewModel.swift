@@ -41,6 +41,10 @@ class ScheduleDetailViewModel {
     }
 
     func segmentStatus(for segment: TimeBoxSegment) -> TimeBoxSegment.Status {
+        if Date() >= schedule.endDateTime {
+            return .completed
+        }
+
         guard timerService.currentScheduleId == schedule.id,
               timerService.timerState != .idle else {
             return .pending
@@ -85,8 +89,28 @@ class ScheduleDetailViewModel {
         }
     }
 
+    var rating: Int? {
+        schedule.rating
+    }
+
+    func setRating(_ value: Int, context: ModelContext) {
+        schedule.rating = (schedule.rating == value) ? nil : value
+        try? context.save()
+    }
+
+    static let ratingColors: [Color] = [
+        .red,
+        .orange,
+        .yellow,
+        Color(red: 0.6, green: 0.8, blue: 0.2),
+        .green
+    ]
+
     func delete(context: ModelContext) async {
         await NotificationService.shared.cancelNotifications(for: schedule.id)
+        if timerService.currentScheduleId == schedule.id {
+            timerService.cancel()
+        }
         context.delete(schedule)
         try? context.save()
     }

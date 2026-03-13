@@ -45,6 +45,15 @@ struct CalendarView: View {
             .fullScreenCover(isPresented: $showTimer) {
                 TimerView()
             }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showTimer = true
+                    } label: {
+                        Image(systemName: "timer")
+                    }
+                }
+            }
             .onChange(of: timerService.shouldShowTimer) { _, newValue in
                 if newValue {
                     showTimer = true

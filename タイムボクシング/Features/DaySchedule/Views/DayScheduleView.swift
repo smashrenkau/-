@@ -33,6 +33,15 @@ struct DayScheduleView: View {
         }
         .navigationTitle(viewModel.headerText)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showTimer = true
+                } label: {
+                    Image(systemName: "timer")
+                }
+            }
+        }
         .fullScreenCover(isPresented: $showScheduleForm) {
             ScheduleFormView(initialDate: date)
         }
@@ -43,12 +52,17 @@ struct DayScheduleView: View {
             TimerView()
         }
         .sheet(item: $selectedSchedule) { schedule in
-            ScheduleDetailView(schedule: schedule) { editTarget in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    editingSchedule = editTarget
+            ScheduleDetailView(
+                schedule: schedule,
+                onEdit: { editTarget in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        editingSchedule = editTarget
+                    }
                 }
-            }
-            .presentationDetents([.medium])
+            )
+            .presentationDetents([.large])
+            .presentationBackground(.regularMaterial)
+            .presentationBackgroundInteraction(.disabled)
         }
         .onChange(of: timerService.shouldShowTimer) { _, newValue in
             if newValue {
@@ -62,59 +76,84 @@ struct DayScheduleView: View {
 
     private var timelineView: some View {
         GeometryReader { geometry in
-            ScrollView {
-                ZStack(alignment: .topLeading) {
-                    hoursGrid
+            ScrollViewReader { proxy in
+                ScrollView {
+                    ZStack(alignment: .topLeading) {
+                        hoursGrid
 
-                    let segmentLayouts = viewModel.computeSegmentLayouts(for: daySchedules)
-                    let availableWidth = geometry.size.width - 56
+                        let segmentLayouts = viewModel.computeSegmentLayouts(for: daySchedules)
+                        let availableWidth = geometry.size.width - 56
 
-                    ForEach(segmentLayouts, id: \.segment.id) { layout in
-                        let boxWidth = availableWidth / CGFloat(layout.totalColumns)
+                        ForEach(segmentLayouts, id: \.segment.id) { layout in
+                            let boxWidth = availableWidth / CGFloat(layout.totalColumns)
 
-                        TimeBoxView(segment: layout.segment)
-                            .frame(
-                                width: boxWidth - 2,
-                                height: viewModel.boxHeight(for: layout.segment)
-                            )
-                            .offset(
-                                x: 50 + boxWidth * CGFloat(layout.column),
-                                y: viewModel.yOffset(for: layout.segment)
-                            )
-                            .onTapGesture {
-                                selectedSchedule = layout.schedule
-                            }
+                            TimeBoxView(segment: layout.segment)
+                                .frame(
+                                    width: boxWidth - 2,
+                                    height: viewModel.boxHeight(for: layout.segment)
+                                )
+                                .offset(
+                                    x: 50 + boxWidth * CGFloat(layout.column),
+                                    y: viewModel.yOffset(for: layout.segment)
+                                )
+                                .onTapGesture {
+                                    selectedSchedule = layout.schedule
+                                }
+                        }
                     }
+                    .frame(height: 25 * viewModel.hourHeight)
                 }
-                .frame(height: 25 * viewModel.hourHeight)
+                .onAppear {
+                    let currentHour = Calendar.current.component(.hour, from: Date())
+                    let scrollTarget = max(currentHour - 1, 0)
+                    proxy.scrollTo(scrollTarget, anchor: .top)
+                }
+                .simultaneousGesture(
+                    MagnifyGesture()
+                        .onChanged { value in
+                            viewModel.applyPinchScale(value.magnification)
+                        }
+                        .onEnded { _ in
+                            viewModel.resetPinchScale()
+                        }
+                )
             }
-            .simultaneousGesture(
-                MagnifyGesture()
-                    .onChanged { value in
-                        viewModel.applyPinchScale(value.magnification)
-                    }
-                    .onEnded { _ in
-                        viewModel.resetPinchScale()
-                    }
-            )
         }
     }
 
     private var hoursGrid: some View {
         VStack(spacing: 0) {
             ForEach(0..<25, id: \.self) { hour in
-                HStack(alignment: .top, spacing: 4) {
-                    Text(String(format: "%d:00", hour))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .frame(width: 44, alignment: .trailing)
+                VStack(spacing: 0) {
+                    HStack(alignment: .top, spacing: 4) {
+                        Text(String(format: "%d:00", hour))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .frame(width: 44, alignment: .trailing)
 
-                    VStack(spacing: 0) {
-                        Divider()
-                        Spacer()
+                        VStack(spacing: 0) {
+                            Divider()
+                            Spacer()
+                        }
+                    }
+                    .frame(height: viewModel.hourHeight / 2)
+                    .id(hour)
+
+                    if hour < 24 {
+                        HStack(alignment: .top, spacing: 4) {
+                            Text(String(format: "%d:30", hour))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary.opacity(0.5))
+                                .frame(width: 44, alignment: .trailing)
+
+                            VStack(spacing: 0) {
+                                Divider().opacity(0.4)
+                                Spacer()
+                            }
+                        }
+                        .frame(height: viewModel.hourHeight / 2)
                     }
                 }
-                .frame(height: viewModel.hourHeight)
             }
         }
     }

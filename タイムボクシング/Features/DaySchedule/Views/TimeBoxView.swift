@@ -5,7 +5,7 @@ struct TimeBoxView: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: 6)
-            .fill(Color(hex: segment.colorHex).opacity(segment.isBreak ? 0.4 : 1.0))
+            .fill(segment.isBreak ? Color(hex: "#D0D0D0") : Color(hex: segment.colorHex))
             .overlay(alignment: .topLeading) {
                 Text(segment.displayName)
                     .font(.caption.bold())

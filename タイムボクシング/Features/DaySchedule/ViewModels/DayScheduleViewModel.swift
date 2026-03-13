@@ -4,7 +4,7 @@ import SwiftUI
 class DayScheduleViewModel {
     let date: Date
 
-    static let defaultHourHeight: CGFloat = 78
+    static let defaultHourHeight: CGFloat = 150
     static let minHourHeight: CGFloat = 40
     static let maxHourHeight: CGFloat = 200
 
@@ -57,17 +57,23 @@ class DayScheduleViewModel {
         return max(CGFloat(seconds / 3600) * hourHeight, 24)
     }
 
+    private static let topPaddingMinutes: CGFloat = 2
+
+    private var topPadding: CGFloat {
+        (Self.topPaddingMinutes / 60.0) * hourHeight
+    }
+
     func yOffset(for segment: TimeBoxSegment) -> CGFloat {
         let effectiveStart = max(segment.startTime, startOfDay)
         let seconds = effectiveStart.timeIntervalSince(startOfDay)
-        return CGFloat(seconds / 3600) * hourHeight
+        return CGFloat(seconds / 3600) * hourHeight + topPadding
     }
 
     func boxHeight(for segment: TimeBoxSegment) -> CGFloat {
         let effectiveStart = max(segment.startTime, startOfDay)
         let effectiveEnd = min(segment.endTime, endOfDay)
         let seconds = effectiveEnd.timeIntervalSince(effectiveStart)
-        return max(CGFloat(seconds / 3600) * hourHeight, 24)
+        return max(CGFloat(seconds / 3600) * hourHeight - topPadding, 24)
     }
 
     struct SegmentLayout {

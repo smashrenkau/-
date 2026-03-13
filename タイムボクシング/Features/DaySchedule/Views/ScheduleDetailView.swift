@@ -7,6 +7,7 @@ struct ScheduleDetailView: View {
     let schedule: ScheduleItem
     var onEdit: ((ScheduleItem) -> Void)?
     @State private var viewModel: ScheduleDetailViewModel
+    @State private var showTimer = false
 
     init(schedule: ScheduleItem, onEdit: ((ScheduleItem) -> Void)? = nil) {
         self.schedule = schedule
@@ -58,7 +59,8 @@ struct ScheduleDetailView: View {
 
                     Spacer(minLength: 16)
 
-                    // ボタン
+                    ratingView
+
                     VStack(spacing: 12) {
                         Button {
                             dismiss()
@@ -93,7 +95,53 @@ struct ScheduleDetailView: View {
             }
             .navigationTitle("スケジュール詳細")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showTimer = true
+                    } label: {
+                        Image(systemName: "timer")
+                    }
+                }
+            }
+            .fullScreenCover(isPresented: $showTimer) {
+                TimerView()
+            }
         }
+    }
+
+    // MARK: - Rating
+
+    private var ratingView: some View {
+        VStack(spacing: 10) {
+            Text("このタスクの集中度を評価しよう")
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 8) {
+                ForEach(1...5, id: \.self) { score in
+                    let color = ScheduleDetailViewModel.ratingColors[score - 1]
+                    let isSelected = viewModel.rating == score
+
+                    Button {
+                        viewModel.setRating(score, context: modelContext)
+                    } label: {
+                        Text("\(score)点")
+                            .font(.subheadline.bold())
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(isSelected ? color : color.opacity(0.15))
+                            .foregroundStyle(isSelected ? .white : color)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(color, lineWidth: isSelected ? 2 : 0)
+                            )
+                    }
+                }
+            }
+        }
+        .padding(.horizontal)
     }
 
     // MARK: - Segment List
