@@ -1,0 +1,8 @@
+# 音声ファイル（大容量のためgit管理外）
+*.mp3
+*.wav
+*.aac
+*.m4a
+
+# macOS
+.DS_Store
