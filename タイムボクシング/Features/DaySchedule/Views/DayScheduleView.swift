@@ -5,8 +5,6 @@ struct DayScheduleView: View {
     let date: Date
     @State private var viewModel: DayScheduleViewModel
     @State private var showScheduleForm = false
-    @State private var showTaskForm = false
-    @State private var showTaskList = false
     @State private var showTimer = false
     @State private var selectedSchedule: ScheduleItem?
     @State private var editingSchedule: ScheduleItem?
@@ -27,8 +25,6 @@ struct DayScheduleView: View {
 
             FloatingAddButton(
                 onAddSchedule: { showScheduleForm = true },
-                onAddTask: { showTaskForm = true },
-                onShowTaskList: { showTaskList = true },
                 onShowTimer: { showTimer = true }
             )
             .padding(20)
@@ -40,13 +36,6 @@ struct DayScheduleView: View {
         }
         .fullScreenCover(item: $editingSchedule) { schedule in
             ScheduleFormView(schedule: schedule)
-        }
-        .sheet(isPresented: $showTaskForm) {
-            TaskFormView()
-                .presentationDetents([.medium])
-        }
-        .fullScreenCover(isPresented: $showTaskList) {
-            TaskListView()
         }
         .fullScreenCover(isPresented: $showTimer) {
             TimerView()
@@ -69,20 +58,20 @@ struct DayScheduleView: View {
                 ZStack(alignment: .topLeading) {
                     hoursGrid
 
-                    let layouts = viewModel.computeLayouts(for: daySchedules)
+                    let segmentLayouts = viewModel.computeSegmentLayouts(for: daySchedules)
                     let availableWidth = geometry.size.width - 56
 
-                    ForEach(Array(layouts.enumerated()), id: \.element.schedule.id) { _, layout in
+                    ForEach(segmentLayouts, id: \.segment.id) { layout in
                         let boxWidth = availableWidth / CGFloat(layout.totalColumns)
 
-                        TimeBoxView(schedule: layout.schedule)
+                        TimeBoxView(segment: layout.segment)
                             .frame(
                                 width: boxWidth - 2,
-                                height: viewModel.boxHeight(for: layout.schedule)
+                                height: viewModel.boxHeight(for: layout.segment)
                             )
                             .offset(
                                 x: 50 + boxWidth * CGFloat(layout.column),
-                                y: viewModel.yOffset(for: layout.schedule)
+                                y: viewModel.yOffset(for: layout.segment)
                             )
                             .onTapGesture {
                                 selectedSchedule = layout.schedule

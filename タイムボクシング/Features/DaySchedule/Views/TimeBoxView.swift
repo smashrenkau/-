@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct TimeBoxView: View {
-    let schedule: ScheduleItem
+    let segment: TimeBoxSegment
 
     var body: some View {
         RoundedRectangle(cornerRadius: 6)
-            .fill(Color(hex: schedule.displayColorHex))
+            .fill(Color(hex: segment.colorHex).opacity(segment.isBreak ? 0.4 : 1.0))
             .overlay(alignment: .topLeading) {
-                Text(schedule.displayTaskName)
+                Text(segment.displayName)
                     .font(.caption.bold())
                     .foregroundStyle(.black.opacity(0.8))
                     .padding(4)

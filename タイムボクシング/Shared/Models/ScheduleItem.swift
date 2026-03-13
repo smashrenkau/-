@@ -1,6 +1,16 @@
 import Foundation
 import SwiftData
 
+struct TimeBoxSegment: Identifiable {
+    let id: String
+    let startTime: Date
+    let endTime: Date
+    let displayName: String
+    let colorHex: String
+    let isBreak: Bool
+    let parentScheduleID: UUID
+}
+
 @Model
 class ScheduleItem {
     var id: UUID
@@ -34,6 +44,60 @@ class ScheduleItem {
 
     var displayColorHex: String {
         task?.colorHex ?? "#D9D9D9"
+    }
+
+    var timeBoxSegments: [TimeBoxSegment] {
+        let taskName = displayTaskName
+        let colorHex = displayColorHex
+
+        if loopCount == 0 {
+            return [
+                TimeBoxSegment(
+                    id: "\(id)-work-0",
+                    startTime: startDateTime,
+                    endTime: endDateTime,
+                    displayName: "\(taskName)（作業）",
+                    colorHex: colorHex,
+                    isBreak: false,
+                    parentScheduleID: id
+                )
+            ]
+        }
+
+        var segments: [TimeBoxSegment] = []
+        var current = startDateTime
+
+        for i in 0..<loopCount {
+            let workEnd = current.addingTimeInterval(TimeInterval(workMinutes * 60))
+            segments.append(
+                TimeBoxSegment(
+                    id: "\(id)-work-\(i)",
+                    startTime: current,
+                    endTime: workEnd,
+                    displayName: "\(taskName)（作業）",
+                    colorHex: colorHex,
+                    isBreak: false,
+                    parentScheduleID: id
+                )
+            )
+            current = workEnd
+
+            let breakEnd = current.addingTimeInterval(TimeInterval(breakMinutes * 60))
+            segments.append(
+                TimeBoxSegment(
+                    id: "\(id)-break-\(i)",
+                    startTime: current,
+                    endTime: breakEnd,
+                    displayName: "\(taskName)（休憩）",
+                    colorHex: colorHex,
+                    isBreak: true,
+                    parentScheduleID: id
+                )
+            )
+            current = breakEnd
+        }
+
+        return segments
     }
 
     static func calculateEndDateTime(

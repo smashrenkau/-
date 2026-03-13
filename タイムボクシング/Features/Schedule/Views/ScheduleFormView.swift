@@ -6,6 +6,8 @@ struct ScheduleFormView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \TaskItem.name) private var tasks: [TaskItem]
     @State private var viewModel: ScheduleFormViewModel
+    @State private var showTaskForm = false
+    @State private var showTaskList = false
 
     init(schedule: ScheduleItem? = nil, initialDate: Date? = nil) {
         _viewModel = State(initialValue: ScheduleFormViewModel(
@@ -42,31 +44,57 @@ struct ScheduleFormView: View {
             .onChange(of: viewModel.loopCount) { viewModel.recalculateEndDateTime() }
             .onChange(of: viewModel.workMinutes) { viewModel.recalculateEndDateTime() }
             .onChange(of: viewModel.breakMinutes) { viewModel.recalculateEndDateTime() }
+            .sheet(isPresented: $showTaskForm) {
+                TaskFormView()
+                    .presentationDetents([.medium])
+            }
+            .fullScreenCover(isPresented: $showTaskList) {
+                TaskListView()
+            }
         }
     }
 
     // MARK: - Task Selection
 
     private var taskSelectionSection: some View {
-        Section("タスク選択") {
-            if tasks.isEmpty {
-                Text("タスクがありません")
-                    .foregroundStyle(.secondary)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(tasks) { task in
-                            TaskTagView(
-                                name: task.name,
-                                colorHex: task.colorHex,
-                                isSelected: viewModel.selectedTask?.id == task.id
-                            )
-                            .onTapGesture {
-                                viewModel.selectedTask = task
-                            }
-                        }
+        Section {
+            FlowLayout(spacing: 8) {
+                Button {
+                    showTaskForm = true
+                } label: {
+                    Text("+ タスク追加")
+                        .font(.subheadline.weight(.medium))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .foregroundStyle(.secondary)
+                        .overlay(
+                            Capsule()
+                                .stroke(style: StrokeStyle(lineWidth: 1.5, dash: [4]))
+                                .foregroundStyle(.secondary)
+                        )
+                }
+
+                ForEach(tasks) { task in
+                    TaskTagView(
+                        name: task.name,
+                        colorHex: task.colorHex,
+                        isSelected: viewModel.selectedTask?.id == task.id
+                    )
+                    .onTapGesture {
+                        viewModel.selectedTask = task
                     }
-                    .padding(.vertical, 4)
+                }
+            }
+            .padding(.vertical, 4)
+        } header: {
+            HStack {
+                Text("タスク選択")
+                Spacer()
+                Button {
+                    showTaskList = true
+                } label: {
+                    Image(systemName: "pencil.circle")
+                        .font(.body)
                 }
             }
         }

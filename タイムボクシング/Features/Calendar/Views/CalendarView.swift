@@ -4,8 +4,6 @@ import SwiftData
 struct CalendarView: View {
     @State private var viewModel = CalendarViewModel()
     @State private var showScheduleForm = false
-    @State private var showTaskForm = false
-    @State private var showTaskList = false
     @State private var showTimer = false
     @Query private var allSchedules: [ScheduleItem]
 
@@ -33,8 +31,6 @@ struct CalendarView: View {
 
                 FloatingAddButton(
                     onAddSchedule: { showScheduleForm = true },
-                    onAddTask: { showTaskForm = true },
-                    onShowTaskList: { showTaskList = true },
                     onShowTimer: { showTimer = true }
                 )
                 .padding(20)
@@ -44,13 +40,6 @@ struct CalendarView: View {
             }
             .fullScreenCover(isPresented: $showScheduleForm) {
                 ScheduleFormView()
-            }
-            .sheet(isPresented: $showTaskForm) {
-                TaskFormView()
-                    .presentationDetents([.medium])
-            }
-            .fullScreenCover(isPresented: $showTaskList) {
-                TaskListView()
             }
             .fullScreenCover(isPresented: $showTimer) {
                 TimerView()

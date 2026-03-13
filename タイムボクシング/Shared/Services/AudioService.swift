@@ -14,11 +14,11 @@ final class AudioService {
     }
 
     func playTaskMusic() {
-        play(resource: "task", fileExtension: "mp3")
+        play(resource: "task", fileExtension: "m4a")
     }
 
     func playBreakMusic() {
-        play(resource: "rest", fileExtension: "mp3")
+        play(resource: "rest", fileExtension: "m4a")
     }
 
     func pause() {

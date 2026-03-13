@@ -3,8 +3,6 @@ import SwiftUI
 struct FloatingAddButton: View {
     @State private var isExpanded = false
     var onAddSchedule: () -> Void
-    var onAddTask: () -> Void
-    var onShowTaskList: () -> Void
     var onShowTimer: () -> Void
 
     var body: some View {
@@ -15,22 +13,6 @@ struct FloatingAddButton: View {
                     onAddSchedule()
                 } label: {
                     fabMenuItem(icon: "calendar.badge.plus", text: "スケジュール追加", color: .blue)
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-
-                Button {
-                    isExpanded = false
-                    onAddTask()
-                } label: {
-                    fabMenuItem(icon: "tag.fill", text: "タスク追加", color: .green)
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-
-                Button {
-                    isExpanded = false
-                    onShowTaskList()
-                } label: {
-                    fabMenuItem(icon: "list.bullet", text: "タスク一覧", color: .orange)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
 

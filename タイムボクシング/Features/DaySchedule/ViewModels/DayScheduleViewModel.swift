@@ -57,6 +57,47 @@ class DayScheduleViewModel {
         return max(CGFloat(seconds / 3600) * hourHeight, 24)
     }
 
+    func yOffset(for segment: TimeBoxSegment) -> CGFloat {
+        let effectiveStart = max(segment.startTime, startOfDay)
+        let seconds = effectiveStart.timeIntervalSince(startOfDay)
+        return CGFloat(seconds / 3600) * hourHeight
+    }
+
+    func boxHeight(for segment: TimeBoxSegment) -> CGFloat {
+        let effectiveStart = max(segment.startTime, startOfDay)
+        let effectiveEnd = min(segment.endTime, endOfDay)
+        let seconds = effectiveEnd.timeIntervalSince(effectiveStart)
+        return max(CGFloat(seconds / 3600) * hourHeight, 24)
+    }
+
+    struct SegmentLayout {
+        let segment: TimeBoxSegment
+        let schedule: ScheduleItem
+        let column: Int
+        let totalColumns: Int
+    }
+
+    func computeSegmentLayouts(for schedules: [ScheduleItem]) -> [SegmentLayout] {
+        let baseLayouts = computeLayouts(for: schedules)
+        var result: [SegmentLayout] = []
+
+        for layout in baseLayouts {
+            let segments = layout.schedule.timeBoxSegments
+            for segment in segments {
+                if segment.endTime > startOfDay && segment.startTime < endOfDay {
+                    result.append(SegmentLayout(
+                        segment: segment,
+                        schedule: layout.schedule,
+                        column: layout.column,
+                        totalColumns: layout.totalColumns
+                    ))
+                }
+            }
+        }
+
+        return result
+    }
+
     /// 重複するスケジュールをグループ化し、各スケジュールのカラム位置を返す
     func computeLayouts(for schedules: [ScheduleItem]) -> [(schedule: ScheduleItem, column: Int, totalColumns: Int)] {
         let sorted = schedules.sorted { $0.startDateTime < $1.startDateTime }
