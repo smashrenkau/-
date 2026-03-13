@@ -7,6 +7,7 @@ struct CalendarView: View {
     @State private var showTimer = false
     @Query private var allSchedules: [ScheduleItem]
 
+    private let timerService = TimerService.shared
     private let weekdays = ["月", "火", "水", "木", "金", "土", "日"]
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
 
@@ -44,6 +45,12 @@ struct CalendarView: View {
             .fullScreenCover(isPresented: $showTimer) {
                 TimerView()
             }
+            .onChange(of: timerService.shouldShowTimer) { _, newValue in
+                if newValue {
+                    showTimer = true
+                    timerService.shouldShowTimer = false
+                }
+            }
         }
     }
 
@@ -77,12 +84,20 @@ struct CalendarView: View {
             ForEach(weekdays, id: \.self) { day in
                 Text(day)
                     .font(.caption.bold())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(weekdayColor(for: day))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
             }
         }
         .padding(.horizontal, 4)
+    }
+
+    private func weekdayColor(for day: String) -> Color {
+        switch day {
+        case "土": return .red
+        case "日": return .blue
+        default: return .secondary
+        }
     }
 
     private func calendarGrid(cellHeight: CGFloat) -> some View {
@@ -92,6 +107,7 @@ struct CalendarView: View {
                     NavigationLink(value: date) {
                         CalendarDayCellView(
                             day: viewModel.dayNumber(date),
+                            date: date,
                             isToday: viewModel.isToday(date),
                             schedules: viewModel.schedules(for: date, from: allSchedules),
                             cellHeight: cellHeight

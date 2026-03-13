@@ -2,20 +2,34 @@ import SwiftUI
 
 struct CalendarDayCellView: View {
     let day: Int
+    let date: Date
     let isToday: Bool
     let schedules: [ScheduleItem]
     let cellHeight: CGFloat
 
     private let maxVisibleSchedules = 2
 
+    private var weekday: Int {
+        Calendar.current.component(.weekday, from: date)
+    }
+
+    private var dayTextColor: Color {
+        if isToday { return .white }
+        switch weekday {
+        case 7: return .red    // 土曜日
+        case 1: return .blue   // 日曜日
+        default: return .primary
+        }
+    }
+
     var body: some View {
         VStack(spacing: 2) {
             Text("\(day)")
                 .font(.caption2)
                 .fontWeight(isToday ? .bold : .regular)
-                .foregroundStyle(isToday ? .blue : .primary)
+                .foregroundStyle(dayTextColor)
                 .frame(width: 22, height: 22)
-                .background(isToday ? Color.blue.opacity(0.25) : Color.clear)
+                .background(isToday ? Color.blue : Color.clear)
                 .clipShape(Circle())
 
             if !schedules.isEmpty {

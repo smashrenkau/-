@@ -10,6 +10,8 @@ struct DayScheduleView: View {
     @State private var editingSchedule: ScheduleItem?
     @Query private var allSchedules: [ScheduleItem]
 
+    private let timerService = TimerService.shared
+
     init(date: Date) {
         self.date = date
         _viewModel = State(initialValue: DayScheduleViewModel(date: date))
@@ -47,6 +49,12 @@ struct DayScheduleView: View {
                 }
             }
             .presentationDetents([.medium])
+        }
+        .onChange(of: timerService.shouldShowTimer) { _, newValue in
+            if newValue {
+                showTimer = true
+                timerService.shouldShowTimer = false
+            }
         }
     }
 

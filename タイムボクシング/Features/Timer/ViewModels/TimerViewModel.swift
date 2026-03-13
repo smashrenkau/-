@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import UserNotifications
 
 enum TimerMode {
     case scheduleSynced
@@ -18,290 +17,58 @@ enum TimerState {
     case paused
 }
 
+@MainActor
 @Observable
 class TimerViewModel {
-    // MARK: - Timer State
+    private let timerService = TimerService.shared
 
-    var timerMode: TimerMode = .manual
-    var timerState: TimerState = .idle
-    var timerPhase: TimerPhase = .work
-    var remainingSeconds: Int = 0
-    var manualMinutes: Int = 25
-    var isMuted: Bool = false
+    // MARK: - Bindings for View
 
-    var currentSchedule: ScheduleItem?
-    var currentCycleIndex: Int = 0
-    var noScheduleMessage: String?
-
-    private var timer: Timer?
-    private var backgroundDate: Date?
-    private let audioService = AudioService.shared
-
-    // MARK: - Computed Properties
-
-    var displayTime: String {
-        let minutes = remainingSeconds / 60
-        let seconds = remainingSeconds % 60
-        return String(format: "%02d:%02d", minutes, seconds)
+    var manualMinutes: Int {
+        get { timerService.manualMinutes }
+        set { timerService.manualMinutes = newValue }
     }
 
-    var phaseLabel: String {
-        switch timerState {
-        case .idle:
-            return "タイマー"
-        case .running, .paused:
-            switch timerPhase {
-            case .work:
-                return currentSchedule?.displayTaskName ?? "作業中"
-            case .breakTime:
-                return "休憩中"
-            }
-        }
-    }
+    var timerState: TimerState { timerService.timerState }
+    var timerMode: TimerMode { timerService.timerMode }
+    var timerPhase: TimerPhase { timerService.timerPhase }
+    var remainingSeconds: Int { timerService.remainingSeconds }
+    var currentCycleIndex: Int { timerService.currentCycleIndex }
+    var isMuted: Bool { timerService.isMuted }
+    var displayTime: String { timerService.displayTime }
+    var phaseLabel: String { timerService.phaseLabel }
+    var stopButtonLabel: String { timerService.stopButtonLabel }
 
-    var stopButtonLabel: String {
-        timerState == .paused ? "再開" : "ストップ"
-    }
+    var scheduleColorHex: String { timerService.scheduleColorHex }
+    var scheduleName: String { timerService.scheduleName }
+    var scheduleLoopCount: Int { timerService.scheduleLoopCount }
+    var currentScheduleId: UUID? { timerService.currentScheduleId }
 
-    var hasActiveSchedule: Bool {
-        currentSchedule != nil
-    }
+    var hasActiveSchedule: Bool { timerService.currentScheduleId != nil }
 
-    // MARK: - Schedule Sync
-
-    func syncWithSchedule(allSchedules: [ScheduleItem]) {
-        let now = Date()
-        let todayStart = Calendar.current.startOfDay(for: now)
-        let todayEnd = Calendar.current.date(byAdding: .day, value: 1, to: todayStart)!
-
-        let activeSchedules = allSchedules.filter { schedule in
-            schedule.startDateTime < todayEnd && schedule.endDateTime > todayStart &&
-            schedule.startDateTime <= now && schedule.endDateTime > now
-        }
-
-        guard let schedule = activeSchedules.first else {
-            noScheduleMessage = "同期するスケジュールがありません"
-            return
-        }
-
-        noScheduleMessage = nil
-        currentSchedule = schedule
-        timerMode = .scheduleSynced
-
-        let elapsed = now.timeIntervalSince(schedule.startDateTime)
-        let elapsedMinutes = Int(elapsed) / 60
-
-        if schedule.loopCount == 0 {
-            let remaining = schedule.workMinutes - elapsedMinutes
-            if remaining > 0 {
-                timerPhase = .work
-                remainingSeconds = remaining * 60 - (Int(elapsed) % 60)
-            } else {
-                noScheduleMessage = "同期するスケジュールがありません"
-                return
-            }
-        } else {
-            let cycleLength = schedule.workMinutes + schedule.breakMinutes
-            let currentCycle = elapsedMinutes / cycleLength
-            let positionInCycle = elapsedMinutes % cycleLength
-
-            if currentCycle >= schedule.loopCount {
-                noScheduleMessage = "同期するスケジュールがありません"
-                return
-            }
-
-            currentCycleIndex = currentCycle
-
-            if positionInCycle < schedule.workMinutes {
-                timerPhase = .work
-                let remainingInPhase = schedule.workMinutes - positionInCycle
-                remainingSeconds = remainingInPhase * 60 - (Int(elapsed) % 60)
-            } else {
-                timerPhase = .breakTime
-                let remainingInPhase = cycleLength - positionInCycle
-                remainingSeconds = remainingInPhase * 60 - (Int(elapsed) % 60)
-            }
-        }
-
-        if remainingSeconds < 0 { remainingSeconds = 0 }
-        startTimer()
-        updateAudioForPhase()
-    }
-
-    // MARK: - Manual Mode
+    // MARK: - Actions
 
     func startManualTimer() {
-        timerMode = .manual
-        timerPhase = .work
-        remainingSeconds = manualMinutes * 60
-        currentSchedule = nil
-        noScheduleMessage = nil
-        audioService.stop()
-        startTimer()
+        timerService.startManualTimer()
     }
 
-    // MARK: - Timer Control
-
     func togglePause() {
-        switch timerState {
-        case .running:
-            pauseTimer()
-        case .paused:
-            resumeTimer()
-        case .idle:
-            break
-        }
+        timerService.togglePause()
     }
 
     func cancel() {
-        stopTimer()
-        audioService.stop()
-        timerState = .idle
-        remainingSeconds = 0
-        currentSchedule = nil
-        currentCycleIndex = 0
-        noScheduleMessage = nil
-        timerPhase = .work
+        timerService.cancel()
     }
 
     func toggleMute() {
-        isMuted.toggle()
-        if isMuted {
-            audioService.pause()
-        } else if timerState == .running && timerMode == .scheduleSynced {
-            updateAudioForPhase()
-        }
+        timerService.toggleMute()
     }
 
-    // MARK: - Background Handling
-
     func onEnterBackground() {
-        backgroundDate = Date()
+        timerService.onEnterBackground()
     }
 
     func onEnterForeground() {
-        guard let backgroundDate, timerState == .running else {
-            self.backgroundDate = nil
-            return
-        }
-
-        if audioService.isPlaying {
-            self.backgroundDate = nil
-            return
-        }
-
-        let elapsed = Int(Date().timeIntervalSince(backgroundDate))
-        remainingSeconds = max(remainingSeconds - elapsed, 0)
-        self.backgroundDate = nil
-
-        if remainingSeconds <= 0 {
-            onTimerComplete()
-        }
-    }
-
-    // MARK: - Private
-
-    private func startTimer() {
-        timerState = .running
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.tick()
-            }
-        }
-    }
-
-    private func pauseTimer() {
-        timerState = .paused
-        timer?.invalidate()
-        timer = nil
-        if timerMode == .scheduleSynced {
-            audioService.pause()
-        }
-    }
-
-    private func resumeTimer() {
-        startTimer()
-        if timerMode == .scheduleSynced && !isMuted {
-            audioService.resume()
-        }
-    }
-
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-    }
-
-    private func tick() {
-        guard timerState == .running else { return }
-        remainingSeconds -= 1
-        if remainingSeconds <= 0 {
-            onTimerComplete()
-        }
-    }
-
-    private func onTimerComplete() {
-        remainingSeconds = 0
-
-        if timerMode == .scheduleSynced, let schedule = currentSchedule {
-            if timerPhase == .work && schedule.loopCount > 0 {
-                let cycleLength = schedule.workMinutes + schedule.breakMinutes
-                let currentCycle = currentCycleIndex
-
-                if currentCycle < schedule.loopCount {
-                    timerPhase = .breakTime
-                    remainingSeconds = schedule.breakMinutes * 60
-                    sendLocalNotification(title: schedule.displayTaskName, body: "休憩の時間です！")
-                    updateAudioForPhase()
-                    return
-                }
-            } else if timerPhase == .breakTime && schedule.loopCount > 0 {
-                currentCycleIndex += 1
-                if currentCycleIndex < schedule.loopCount {
-                    timerPhase = .work
-                    remainingSeconds = schedule.workMinutes * 60
-                    sendLocalNotification(title: schedule.displayTaskName, body: "作業開始の時間です！")
-                    updateAudioForPhase()
-                    return
-                }
-            }
-
-            sendLocalNotification(title: schedule.displayTaskName, body: "お疲れ様でした！")
-        } else {
-            sendLocalNotification(title: "タイマー", body: "お疲れ様でした！")
-        }
-
-        stopTimer()
-        audioService.stop()
-        timerState = .idle
-        currentSchedule = nil
-        currentCycleIndex = 0
-    }
-
-    private func updateAudioForPhase() {
-        guard timerMode == .scheduleSynced, !isMuted else {
-            audioService.stop()
-            return
-        }
-        switch timerPhase {
-        case .work:
-            audioService.playTaskMusic()
-        case .breakTime:
-            audioService.playBreakMusic()
-        }
-    }
-
-    private func sendLocalNotification(title: String, body: String) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-
-        let request = UNNotificationRequest(
-            identifier: UUID().uuidString,
-            content: content,
-            trigger: nil
-        )
-        UNUserNotificationCenter.current().add(request)
+        timerService.onEnterForeground()
     }
 }

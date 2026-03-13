@@ -4,14 +4,13 @@ import SwiftData
 struct TimerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = TimerViewModel()
-    @Query private var allSchedules: [ScheduleItem]
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 Spacer()
 
-                phaseLabel
+                phaseLabelView
                 timerDisplay
                 progressIndicator
 
@@ -19,15 +18,8 @@ struct TimerView: View {
 
                 if viewModel.timerState == .idle {
                     idleControls
-                } else {
-                    activeControls
-                }
-
-                if let message = viewModel.noScheduleMessage {
-                    Text(message)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 8)
+                } else if viewModel.timerMode == .manual {
+                    manualModeButtons
                 }
 
                 Spacer()
@@ -56,18 +48,13 @@ struct TimerView: View {
                     }
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
-                viewModel.onEnterBackground()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                viewModel.onEnterForeground()
-            }
+        
         }
     }
 
     // MARK: - Phase Label
 
-    private var phaseLabel: some View {
+    private var phaseLabelView: some View {
         Text(viewModel.phaseLabel)
             .font(.title3.bold())
             .foregroundStyle(phaseLabelColor)
@@ -77,8 +64,8 @@ struct TimerView: View {
     private var phaseLabelColor: Color {
         switch viewModel.timerPhase {
         case .work:
-            if let schedule = viewModel.currentSchedule {
-                return Color(hex: schedule.displayColorHex)
+            if viewModel.timerMode == .scheduleSynced && !viewModel.scheduleColorHex.isEmpty {
+                return Color(hex: viewModel.scheduleColorHex)
             }
             return .primary
         case .breakTime:
@@ -101,10 +88,10 @@ struct TimerView: View {
     private var progressIndicator: some View {
         Group {
             if viewModel.timerState != .idle,
-               let schedule = viewModel.currentSchedule,
-               schedule.loopCount > 0 {
+               viewModel.timerMode == .scheduleSynced,
+               viewModel.scheduleLoopCount > 0 {
                 HStack(spacing: 6) {
-                    ForEach(0..<schedule.loopCount, id: \.self) { index in
+                    ForEach(0..<viewModel.scheduleLoopCount, id: \.self) { index in
                         Circle()
                             .fill(index <= viewModel.currentCycleIndex ? Color.blue : Color.gray.opacity(0.3))
                             .frame(width: 8, height: 8)
@@ -121,18 +108,10 @@ struct TimerView: View {
         VStack(spacing: 24) {
             manualTimePicker
 
-            HStack(spacing: 16) {
-                Button {
-                    viewModel.startManualTimer()
-                } label: {
-                    timerButton(label: "スタート", color: .blue)
-                }
-
-                Button {
-                    viewModel.syncWithSchedule(allSchedules: allSchedules)
-                } label: {
-                    timerButton(label: "スケジュールと同期", color: .orange)
-                }
+            Button {
+                viewModel.startManualTimer()
+            } label: {
+                timerButton(label: "スタート", color: .blue)
             }
         }
     }
@@ -158,42 +137,7 @@ struct TimerView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    // MARK: - Active Controls
-
-    private var activeControls: some View {
-        Group {
-            if viewModel.timerMode == .scheduleSynced {
-                scheduleSyncedButtons
-            } else {
-                manualModeButtons
-            }
-        }
-    }
-
-    private var scheduleSyncedButtons: some View {
-        HStack(spacing: 12) {
-            Button {
-                viewModel.togglePause()
-            } label: {
-                timerButton(
-                    label: viewModel.stopButtonLabel,
-                    color: viewModel.timerState == .paused ? .green : .yellow
-                )
-            }
-
-            Button {
-                viewModel.syncWithSchedule(allSchedules: allSchedules)
-            } label: {
-                timerButton(label: "同期", color: .orange)
-            }
-
-            Button {
-                viewModel.cancel()
-            } label: {
-                timerButton(label: "キャンセル", color: .red)
-            }
-        }
-    }
+    // MARK: - Manual Mode Buttons
 
     private var manualModeButtons: some View {
         HStack(spacing: 12) {
