@@ -5,6 +5,7 @@ struct CalendarView: View {
     @State private var viewModel = CalendarViewModel()
     @State private var showScheduleForm = false
     @State private var showTimer = false
+    @State private var showStats = false
     @Query private var allSchedules: [ScheduleItem]
 
     private let timerService = TimerService.shared
@@ -32,7 +33,8 @@ struct CalendarView: View {
 
                 FloatingAddButton(
                     onAddSchedule: { showScheduleForm = true },
-                    onShowTimer: { showTimer = true }
+                    onShowTimer: { showTimer = true },
+                    onShowStats: { showStats = true }
                 )
                 .padding(20)
             }
@@ -44,6 +46,9 @@ struct CalendarView: View {
             }
             .fullScreenCover(isPresented: $showTimer) {
                 TimerView()
+            }
+            .fullScreenCover(isPresented: $showStats) {
+                StatisticsView()
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

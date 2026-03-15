@@ -6,6 +6,7 @@ struct DayScheduleView: View {
     @State private var viewModel: DayScheduleViewModel
     @State private var showScheduleForm = false
     @State private var showTimer = false
+    @State private var showStats = false
     @State private var selectedSchedule: ScheduleItem?
     @State private var editingSchedule: ScheduleItem?
     @Query private var allSchedules: [ScheduleItem]
@@ -27,7 +28,8 @@ struct DayScheduleView: View {
 
             FloatingAddButton(
                 onAddSchedule: { showScheduleForm = true },
-                onShowTimer: { showTimer = true }
+                onShowTimer: { showTimer = true },
+                onShowStats: { showStats = true }
             )
             .padding(20)
         }
@@ -50,6 +52,9 @@ struct DayScheduleView: View {
         }
         .fullScreenCover(isPresented: $showTimer) {
             TimerView()
+        }
+        .fullScreenCover(isPresented: $showStats) {
+            StatisticsView()
         }
         .sheet(item: $selectedSchedule) { schedule in
             ScheduleDetailView(

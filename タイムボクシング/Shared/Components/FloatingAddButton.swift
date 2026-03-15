@@ -2,9 +2,9 @@ import SwiftUI
 
 struct FloatingAddButton: View {
     @State private var isExpanded = false
-    @State private var showStatsAlert = false
     var onAddSchedule: () -> Void
     var onShowTimer: () -> Void
+    var onShowStats: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
@@ -27,7 +27,7 @@ struct FloatingAddButton: View {
 
                 Button {
                     isExpanded = false
-                    showStatsAlert = true
+                    onShowStats()
                 } label: {
                     fabMenuItem(icon: "chart.bar.fill", text: "統計", color: .purple)
                 }
@@ -47,11 +47,6 @@ struct FloatingAddButton: View {
                     .clipShape(Circle())
                     .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
             }
-        }
-        .alert("統計機能", isPresented: $showStatsAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("集中度の統計を日別とタスク別で評価できる統計データ機能を開発中です。")
         }
     }
 

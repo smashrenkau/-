@@ -141,7 +141,7 @@ struct ScheduleFormView: View {
     // MARK: - Duration
 
     private var durationSection: some View {
-        Section("作業・休憩時間") {
+        Section("タスク時間・休憩時間") {
             HStack(spacing: 0) {
                 VStack(spacing: 2) {
                     Text("タスク時間")

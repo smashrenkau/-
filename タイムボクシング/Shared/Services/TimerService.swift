@@ -13,6 +13,7 @@ final class TimerService {
     var timerMode: TimerMode = .manual
     var timerPhase: TimerPhase = .work
     var remainingSeconds: Int = 0
+    private(set) var totalSeconds: Int = 0
     var currentCycleIndex: Int = 0
     var isMuted: Bool = false
     var shouldShowTimer: Bool = false
@@ -187,6 +188,7 @@ final class TimerService {
             }
         }
 
+        self.totalSeconds = timerPhase == .work ? workMinutes * 60 : breakMinutes * 60
         if remainingSeconds <= 0 { remainingSeconds = 0 }
         segmentStartDate = Date()
         startTimerInternal()
@@ -204,6 +206,7 @@ final class TimerService {
         timerMode = .manual
         timerPhase = .work
         remainingSeconds = manualMinutes * 60
+        totalSeconds = manualMinutes * 60
         currentScheduleId = nil
         scheduleName = ""
         scheduleColorHex = "#D9D9D9"
@@ -289,6 +292,7 @@ final class TimerService {
             if remaining > 0 {
                 timerPhase = .work
                 remainingSeconds = remaining
+                self.totalSeconds = scheduleWorkMinutes * 60
             } else {
                 onTimerComplete()
                 return
@@ -311,9 +315,11 @@ final class TimerService {
             if positionInCycle < workSeconds {
                 timerPhase = .work
                 remainingSeconds = workSeconds - positionInCycle
+                self.totalSeconds = scheduleWorkMinutes * 60
             } else {
                 timerPhase = .breakTime
                 remainingSeconds = cycleSeconds - positionInCycle
+                self.totalSeconds = scheduleBreakMinutes * 60
             }
         }
     }
@@ -370,6 +376,7 @@ final class TimerService {
                 if currentCycleIndex < scheduleLoopCount {
                     timerPhase = .breakTime
                     remainingSeconds = scheduleBreakMinutes * 60
+                    totalSeconds = scheduleBreakMinutes * 60
                     segmentStartDate = Date()
                     sendLocalNotification(title: scheduleName, body: "休憩の時間です！")
                     updateAudioForPhase()
@@ -381,6 +388,7 @@ final class TimerService {
                 if currentCycleIndex < scheduleLoopCount {
                     timerPhase = .work
                     remainingSeconds = scheduleWorkMinutes * 60
+                    totalSeconds = scheduleWorkMinutes * 60
                     segmentStartDate = Date()
                     sendLocalNotification(title: scheduleName, body: "作業開始の時間です！")
                     updateAudioForPhase()
@@ -403,6 +411,7 @@ final class TimerService {
     private func clearScheduleState() {
         timerState = .idle
         remainingSeconds = 0
+        totalSeconds = 0
         currentScheduleId = nil
         scheduleName = ""
         scheduleColorHex = "#D9D9D9"
@@ -592,6 +601,7 @@ final class TimerService {
                 remainingSeconds = savedRemaining
             }
 
+            totalSeconds = manualMinutes * 60
             if remainingSeconds > 0 {
                 segmentStartDate = Date()
                 startTimerInternal()
